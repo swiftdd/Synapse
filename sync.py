@@ -3,15 +3,14 @@ import os, requests, re, shutil
 from collections import defaultdict
 
 # --- 系统配置区 ---
-TOKEN = os.environ.get('G_T')
+TOKEN = os.environ.get('G_T') or os.environ.get('DEPLOY_TOKEN')
 OWNER = "swiftdd"
-NAME = "Synapse"  # 确保与你创建的仓库名一致
+NAME = "Synapse" 
 # ------------------
 
 def get_discussions():
     url = "https://api.github.com/graphql"
     headers = {"Authorization": f"Bearer {TOKEN}"}
-    # GraphQL 查询：只抓取最新生成的讨论
     query = """
     query($owner: String!, $name: String!) {
       repository(owner: $owner, name: $name) {
@@ -27,16 +26,12 @@ def get_discussions():
     try:
         vars = {"owner": OWNER, "name": NAME}
         resp = requests.post(url, json={"query": query, "variables": vars}, headers=headers).json()
-        if 'errors' in resp:
-            print(f"GraphQL Errors: {resp['errors']}")
-            return []
+        if 'errors' in resp: return []
         return resp['data']['repository']['discussions']['nodes']
-    except Exception as e:
-        print(f"Connection failed: {e}")
+    except:
         return []
 
 def sync():
-    # 1. 环境初始化
     for d in ["BACKUP", "wiki_temp"]:
         if os.path.exists(d): shutil.rmtree(d)
         os.makedirs(d)
@@ -44,50 +39,72 @@ def sync():
     data = get_discussions()
     categories = defaultdict(list)
 
-    # 2. 转换讨论流为物理节点
     for item in data:
         title, body, cat = item['title'], item['body'], item['category']['name']
         date = item['createdAt'].split('T')[0]
         clean_t = re.sub(r'[\/\\:\*\?"<>\|]', '', title).strip().replace(" ", "-")
         
-        # A. 物理备份 (BACKUP/分类/日期-标题.md)
         cat_path = os.path.join("BACKUP", cat)
         if not os.path.exists(cat_path): os.makedirs(cat_path)
         f_name = f"{date}-{clean_t}.md"
         with open(os.path.join(cat_path, f_name), "w", encoding="utf-8") as f:
             f.write(f"# {title}\n\n> System-Link: {item['url']}\n\n{body or ''}")
 
-        # B. Wiki 缓存
         w_name = f"[{cat}] {date}-{clean_t}.md"
         with open(os.path.join("wiki_temp", w_name), "w", encoding="utf-8") as f:
             f.write(f"# {title}\n\n> **Category**: {cat} | **Date**: {date}\n\n---\n\n{body or ''}")
 
-        # C. 分类统计
         rel_p = f"BACKUP/{cat}/{f_name}".replace(" ", "%20")
         categories[cat].append(f"- [{title}]({rel_p}) — `{date}`")
 
-    # 3. 构建 README 科技感仪表盘
+    # 构建 Markdown 内容
     content = f"# 🌐 {NAME} / Thought Protocol\n\n"
     content += f"> **Status**: Online | **Identity**: {OWNER}\n\n"
     content += f"[[ 🧠 Wiki-Cortex ]](https://github.com/{OWNER}/{NAME}/wiki) | [[ 💬 Input-Stream ]](https://github.com/{OWNER}/{NAME}/discussions)\n\n---\n"
     
     if not categories:
-        content += "\n> [!CAUTION]\n> NO NEURAL NODES DETECTED. INITIALIZE VIA DISCUSSIONS.\n"
+        content += "\n> [!CAUTION]\n> NO NEURAL NODES DETECTED.\n"
     else:
         for cat_name in sorted(categories.keys()):
             posts = categories[cat_name]
             content += f"### 📂 SECTION_{cat_name.upper()} ({len(posts)})\n"
             content += "\n".join(posts[:5]) + "\n"
             if len(posts) > 5:
-                content += f"\n<details>\n<summary>▶ EXPAND_DATA_STREAM ({len(posts)-5} MORE)</summary>\n\n" + "\n".join(posts[5:]) + "\n\n</details>\n"
+                content += f"\n<details>\n<summary>▶ EXPAND_DATA_STREAM</summary>\n\n" + "\n".join(posts[5:]) + "\n\n</details>\n"
             content += "\n"
 
-    # 4. 生成文件
-    with open("README.md", "w", encoding="utf-8") as f: f.write(content)
-    with open("index.md", "w", encoding="utf-8") as f: f.write("---\nlayout: default\n---\n\n" + content)
+    # 生成 index.md
+    with open("index.md", "w", encoding="utf-8") as f: f.write(content)
+    # 生成 .nojekyll 防止 GitHub Pages 过滤文件
     open(".nojekyll", "w").close()
+
+    # --- 核心：自动生成 index.html 渲染器 ---
+    html_template = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{OWNER} | {NAME}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+    <style>
+        body {{ background-color: #0d1117; margin: 0; }}
+        .markdown-body {{ box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }}
+        @media (max-width: 767px) {{ .markdown-body {{ padding: 15px; }} }}
+    </style>
+</head>
+<body class="markdown-body">
+    <div id="content">Loading Neural Data...</div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        fetch('index.md').then(r => r.text()).then(text => {{
+            document.getElementById('content').innerHTML = marked.parse(text);
+        }});
+    </script>
+</body>
+</html>"""
+    with open("index.html", "w", encoding="utf-8") as f: f.write(html_template)
     
-    print(f"Synced {len(data)} nodes.")
+    print("Success: All nodes and rendering index generated.")
 
 if __name__ == "__main__":
     sync()
