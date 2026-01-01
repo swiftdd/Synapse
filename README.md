@@ -5,11 +5,15 @@
 [[ 🧠 Wiki-Cortex ]](https://github.com/swiftdd/Synapse/wiki) | [[ 💬 Input-Stream ]](https://github.com/swiftdd/Synapse/discussions)
 
 ---
-### 📂 SECTION_CORE_PROTOCOL (2)
+### 📂 SECTION_CORE_PROTOCOL (5)
+- [My best friend is getting married soon.](BACKUP/CORE_PROTOCOL/2026-01-01-My-best-friend-is-getting-married-soon..md) — `2026-01-01`
+- [I feel like everyone gets anxious so easily. Let me share my own methods for relieving anxiety, hoping they can help you.](BACKUP/CORE_PROTOCOL/2026-01-01-I-feel-like-everyone-gets-anxious-so-easily.-Let-me-share-my-own-methods-for-relieving-anxiety,-hoping-they-can-help-you..md) — `2026-01-01`
+- [I wonder if you ever feel the same way I do.](BACKUP/CORE_PROTOCOL/2026-01-01-I-wonder-if-you-ever-feel-the-same-way-I-do..md) — `2026-01-01`
 - [Protocol v1.0: Initializing the Digital Synapse](BACKUP/CORE_PROTOCOL/2026-01-01-Protocol-v1.0-Initializing-the-Digital-Synapse.md) — `2026-01-01`
 - [Welcome to Synapse Discussions!](BACKUP/CORE_PROTOCOL/2026-01-01-Welcome-to-Synapse-Discussions!.md) — `2026-01-01`
 
-### 📂 SECTION_IDEAS (4)
+### 📂 SECTION_IDEAS (5)
+- [We often learn how to love only after we've lost something.](BACKUP/Ideas/2026-01-01-We-often-learn-how-to-love-only-after-we've-lost-something..md) — `2026-01-01`
 - [I often ask myself what kind of relationship I really want.](BACKUP/Ideas/2026-01-01-I-often-ask-myself-what-kind-of-relationship-I-really-want..md) — `2026-01-01`
 - [I still want to meet you in winter.](BACKUP/Ideas/2026-01-01-I-still-want-to-meet-you-in-winter..md) — `2026-01-01`
 - [I haven't met anyone who truly likes me in a long time.](BACKUP/Ideas/2026-01-01-I-haven't-met-anyone-who-truly-likes-me-in-a-long-time..md) — `2026-01-01`
