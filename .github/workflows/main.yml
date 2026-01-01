@@ -57,3 +57,32 @@ jobs:
               git push origin $BRANCH
             fi
           fi
+        # ... (前面保留已有的 Commit & Push 和 Wiki Sync 步骤) ...
+
+      - name: Deploy to swiftdd.github.io
+        env:
+          # 使用我们刚才设置的跨仓库 Token
+          D_T: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          # 1. 克隆门户仓库
+          git clone "https://x-access-token:${D_T}@github.com/swiftdd/swiftdd.github.io.git" portal_repo
+          
+          # 2. 将 Synapse 的最新成果同步过去
+          # 复制首页和配置
+          cp index.md portal_repo/
+          cp .nojekyll portal_repo/
+          # 递归同步文章物理文件
+          rm -rf portal_repo/BACKUP
+          cp -r BACKUP portal_repo/
+          
+          # 3. 提交到门户仓库
+          cd portal_repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if ! git diff --staged --quiet; then
+            git commit -m "update: neural data stream from Synapse"
+            git push origin main
+          else
+            echo "Portal already up to date."
+          fi
