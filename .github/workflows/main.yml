@@ -1,35 +1,66 @@
-name: Synapse Engine
+name: Synapse Engine Core
+
 on:
   discussion:
     types: [created, edited, deleted, labeled, unlabeled]
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
-  core:
+  core-process:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: |
-          pip install requests
-          python sync.py
-      - name: Deploy
-        run: |
-          git config --global user.name "swiftdd"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "update: neural link synchronized" || exit 0
-          git push
-      - name: Wiki Sync
+
+      - name: Process Synapse Nodes
         env:
           G_T: ${{ secrets.G_T }}
         run: |
-          git clone "https://x-access-token:${G_T}@github.com/${{ github.repository }}.wiki.git" wiki_repo
-          cd wiki_repo
-          rm -rf ./*.md
-          cp -r ../wiki_temp/*.md .
+          pip install requests
+          python sync.py
+
+      - name: Commit & Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "docs: synapse nodes updated" && git push || echo "no changes"
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: sync thoughts and system index"
+            git push
+          fi
+
+      - name: Sync Wiki Cortex
+        env:
+          G_T: ${{ secrets.G_T }}
+        run: |
+          # 1. 克隆 Wiki
+          git clone "https://x-access-token:${G_T}@github.com/${{ github.repository }}.wiki.git" wiki_repo
+          
+          # 2. 容错处理：只有当 wiki_temp 中有文件时才同步
+          if [ "$(ls -A wiki_temp)" ]; then
+            cd wiki_repo
+            # 自动识别默认分支 (master 或 main)
+            BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+            # 清理旧节点
+            rm -rf ./*.md
+            # 载入新节点
+            cp -r ../wiki_temp/*.md .
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            if ! git diff --staged --quiet; then
+              git commit -m "docs: synapse nodes updated"
+              git push origin $BRANCH
+            fi
+          else
+            echo "No nodes to sync."
+          fi
