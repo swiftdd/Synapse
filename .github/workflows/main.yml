@@ -1,88 +1,21 @@
-name: Synapse Engine Core
-
-on:
-  discussion:
-    types: [created, edited, deleted, labeled, unlabeled]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  core:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Requests
-        run: pip install requests
-
-      - name: Execute Sync
+- name: Deploy to swiftdd.github.io
         env:
-          G_T: ${{ secrets.G_T }}
-        run: python sync.py
-
-      - name: Push Repository Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: synapse synchronization"
-            git push
-          fi
-
-      - name: Push Wiki Changes
-        env:
-          G_T: ${{ secrets.G_T }}
-        run: |
-          git clone "https://x-access-token:${G_T}@github.com/${{ github.repository }}.wiki.git" wiki_repo
-          if [ -d "wiki_temp" ] && [ "$(ls -A wiki_temp)" ]; then
-            cd wiki_repo
-            BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
-            rm -rf ./*.md
-            cp -r ../wiki_temp/*.md .
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add .
-            if ! git diff --staged --quiet; then
-              git commit -m "docs: wiki cortex update"
-              git push origin $BRANCH
-            fi
-          fi
-        # ... (前面保留已有的 Commit & Push 和 Wiki Sync 步骤) ...
-
-      - name: Deploy to swiftdd.github.io
-        env:
-          # 使用我们刚才设置的跨仓库 Token
           D_T: ${{ secrets.DEPLOY_TOKEN }}
         run: |
-          # 1. 克隆门户仓库
           git clone "https://x-access-token:${D_T}@github.com/swiftdd/swiftdd.github.io.git" portal_repo
           
-          # 2. 将 Synapse 的最新成果同步过去
-          # 复制首页和配置
+          # 同步所有核心展示文件
           cp index.md portal_repo/
+          cp index.html portal_repo/
           cp .nojekyll portal_repo/
-          # 递归同步文章物理文件
           rm -rf portal_repo/BACKUP
           cp -r BACKUP portal_repo/
           
-          # 3. 提交到门户仓库
           cd portal_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           if ! git diff --staged --quiet; then
-            git commit -m "update: neural data stream from Synapse"
+            git commit -m "update: deployment with html renderer"
             git push origin main
-          else
-            echo "Portal already up to date."
           fi
