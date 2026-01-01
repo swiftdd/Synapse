@@ -53,10 +53,10 @@ def sync():
     for item in data:
         title, body, cat = item['title'], item['body'], item['category']['name']
         date = item['createdAt'].split('T')[0]
-        # 兼容中文的文件名清洗逻辑
+        # 兼容中文的文件名清洗
         clean_t = re.sub(r'[\/\\:\*\?"<>\|]', '', title).strip().replace(" ", "-")
         
-        # A. 创建物理备份 (用于 Git 历史追踪)
+        # A. 创建物理备份
         cat_path = os.path.join("BACKUP", cat)
         if not os.path.exists(cat_path): os.makedirs(cat_path)
         f_name = f"{date}-{clean_t}.md"
@@ -77,4 +77,25 @@ def sync():
     content += f"> **Status**: System Online | **Identity**: {OWNER}\n\n"
     content += f"[[ 🧠 Wiki-Cortex ]](https://github.com/{OWNER}/{NAME}/wiki)  |  [[ 💬 Input-Stream ]](https://github.com/{OWNER}/{NAME}/discussions)\n\n---\n"
     
-    if not categories
+    # --- 修复后的逻辑块 ---
+    if not categories:
+        content += "\n> [!IMPORTANT]\n> NO DATA DETECTED. PLEASE START A DISCUSSION TO INITIALIZE SYSTEM.\n"
+    else:
+        for cat_name in sorted(categories.keys()):
+            posts = categories[cat_name]
+            content += f"### 📂 SECTION_{cat_name.upper()} ({len(posts)})\n"
+            content += "\n".join(posts[:5]) + "\n"
+            if len(posts) > 5:
+                content += f"\n<details>\n<summary>▶ EXPAND_DATA_STREAM ({len(posts)-5})</summary>\n\n" + "\n".join(posts[5:]) + "\n\n</details>\n"
+            content += "\n"
+
+    # 4. 固化文件
+    with open("README.md", "w", encoding="utf-8") as f: f.write(content)
+    with open("index.md", "w", encoding="utf-8") as f: f.write("---\nlayout: default\n---\n\n" + content)
+    open(".nojekyll", "w").close()
+    
+    if not os.path.exists("wiki_temp"): os.makedirs("wiki_temp")
+    print(f"Success. Processed {len(data)} nodes.")
+
+if __name__ == "__main__":
+    sync()
