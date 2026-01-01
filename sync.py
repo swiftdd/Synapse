@@ -75,6 +75,8 @@ def sync():
 
     # 生成 index.md
     with open("index.md", "w", encoding="utf-8") as f: f.write(content)
+    # 【必须增加这一行】生成 README.md (给 GitHub 仓库首页用)
+    with open("README.md", "w", encoding="utf-8") as f: f.write(content)
     # 生成 .nojekyll 防止 GitHub Pages 过滤文件
     open(".nojekyll", "w").close()
 
