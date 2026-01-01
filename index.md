@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # 🌐 Synapse / Thought Protocol
 
 > **Status**: Online | **Identity**: swiftdd
