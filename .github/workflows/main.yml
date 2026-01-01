@@ -1,16 +1,76 @@
-- name: Deploy to swiftdd.github.io
+name: Synapse Engine Core
+
+on:
+  discussion:
+    types: [created, edited, deleted, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Requests
+        run: pip install requests
+
+      - name: Execute Sync
+        env:
+          D_T: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          export G_T=$D_T
+          python sync.py
+
+      - name: Push Repository Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: synapse synchronization"
+            git push
+          fi
+
+      - name: Push Wiki Changes
+        env:
+          D_T: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${D_T}@github.com/${{ github.repository }}.wiki.git" wiki_repo
+          if [ -d "wiki_temp" ] && [ "$(ls -A wiki_temp)" ]; then
+            cd wiki_repo
+            BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+            rm -rf ./*.md
+            cp -r ../wiki_temp/*.md .
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            if ! git diff --staged --quiet; then
+              git commit -m "docs: wiki cortex update"
+              git push origin $BRANCH
+            fi
+          fi
+
+      - name: Deploy to swiftdd.github.io
         env:
           D_T: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           git clone "https://x-access-token:${D_T}@github.com/swiftdd/swiftdd.github.io.git" portal_repo
-          
-          # 同步所有核心展示文件
           cp index.md portal_repo/
           cp index.html portal_repo/
           cp .nojekyll portal_repo/
           rm -rf portal_repo/BACKUP
           cp -r BACKUP portal_repo/
-          
           cd portal_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
