@@ -1,0 +1,35 @@
+name: Synapse Engine
+on:
+  discussion:
+    types: [created, edited, deleted, labeled, unlabeled]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: |
+          pip install requests
+          python sync.py
+      - name: Deploy
+        run: |
+          git config --global user.name "swiftdd"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "update: neural link synchronized" || exit 0
+          git push
+      - name: Wiki Sync
+        env:
+          G_T: ${{ secrets.G_T }}
+        run: |
+          git clone "https://x-access-token:${G_T}@github.com/${{ github.repository }}.wiki.git" wiki_repo
+          cd wiki_repo
+          rm -rf ./*.md
+          cp -r ../wiki_temp/*.md .
+          git add .
+          git commit -m "docs: synapse nodes updated" && git push || echo "no changes"
