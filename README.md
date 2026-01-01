@@ -1,7 +1,11 @@
 # 🌐 Synapse / Thought Protocol
 
-> **Status**: System Online | **Identity**: swiftdd
+> **Status**: Online | **Identity**: swiftdd
 
-[[ 🧠 Wiki-Cortex ]](https://github.com/swiftdd/Synapse/wiki)  |  [[ 💬 Input-Stream ]](https://github.com/swiftdd/Synapse/discussions)
+[[ 🧠 Wiki-Cortex ]](https://github.com/swiftdd/Synapse/wiki) | [[ 💬 Input-Stream ]](https://github.com/swiftdd/Synapse/discussions)
 
 ---
+### 📂 SECTION_CORE_PROTOCOL (2)
+- [Protocol v1.0: Initializing the Digital Synapse](BACKUP/CORE_PROTOCOL/2026-01-01-Protocol-v1.0-Initializing-the-Digital-Synapse.md) — `2026-01-01`
+- [Welcome to Synapse Discussions!](BACKUP/CORE_PROTOCOL/2026-01-01-Welcome-to-Synapse-Discussions!.md) — `2026-01-01`
+
